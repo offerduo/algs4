@@ -1,14 +1,14 @@
 public class Percolation {
-  private WeightedQuickUnionUF uf, ufNoBottom;
+  private WeightedQuickUnionUF ufPerc, ufFull;
   private int                  n;
-  private int                  TOPSITE;       // virtual top site: 0
-  private int                  BOTTOMSITE;    // virtual bottom site: n*n+1
-  private boolean[]            isOpenSite;
+  private int                  virtualTopSite;   // virtual top site: 0
+  private int                  virtualBottomSite; // virtual bottom site: n*n+1
+  private boolean[]            isOpenSite;       // status array of sites
 
   // mapping function for 2D (i,j) pair to 1D index
   private int xyTo1D(int i, int j) {
     validateXY(i, j);
-    return (i - 1) * n + j; // 0 is for special use: virtual top site
+    return (i - 1) * n + j;
   }
 
   // Validates 2D representation (i,j) so that 0 < i,j <= n
@@ -16,26 +16,27 @@ public class Percolation {
     if (i <= 0 || i > n)
       throw new IndexOutOfBoundsException("row index i out of bounds");
     if (j <= 0 || j > n)
-      throw new IndexOutOfBoundsException("column index i out of bounds");
+      throw new IndexOutOfBoundsException("column index j out of bounds");
   }
 
-  private void unionOpenNeighbor(int id, int neighbor, boolean isBottom) {
+  private void unionOpenNeighbor(int id, int neighbor, boolean isVirtualBottom) {
     if (neighbor != Integer.MAX_VALUE && isOpenSite[neighbor]) {
-      uf.union(neighbor, id);
-      if (!isBottom)
-        ufNoBottom.union(neighbor, id);
+      ufPerc.union(neighbor, id);
+      if (!isVirtualBottom)
+        ufFull.union(neighbor, id);
     }
   }
 
   // Create N-by-N grid with all sites blocked
   public Percolation(int N) {
-    uf = new WeightedQuickUnionUF(N * N + 2);
-    ufNoBottom = new WeightedQuickUnionUF(N * N + 1);
-    isOpenSite = new boolean[N * N + 2]; // default to closed/false
-    isOpenSite[0] = isOpenSite[N * N + 1] = true;
+    ufPerc = new WeightedQuickUnionUF(N * N + 2);
+    ufFull = new WeightedQuickUnionUF(N * N + 1);
     n = N;
-    TOPSITE = 0;
-    BOTTOMSITE = n * n + 1;
+    virtualTopSite = 0;
+    virtualBottomSite = n * n + 1;
+    isOpenSite = new boolean[N * N + 2]; // default to closed/false
+    // open up virtual top and bottom sites
+    isOpenSite[virtualTopSite] = isOpenSite[virtualBottomSite] = true;
   }
 
   // If site is open, do nothing
@@ -48,13 +49,13 @@ public class Percolation {
       isOpenSite[id] = true;
 
     // merge all open neighboring
-    int top = (id <= n) ? TOPSITE : id - n;
-    int bottom = (id > n * n - n) ? BOTTOMSITE : id + n;
+    int top = (id <= n) ? virtualTopSite : id - n;
+    int bottom = (id > n * n - n) ? virtualBottomSite : id + n;
     int left = (id % n == 1) ? Integer.MAX_VALUE : id - 1;
     int right = (id % n == 0) ? Integer.MAX_VALUE : id + 1;
 
     unionOpenNeighbor(id, top, false);
-    unionOpenNeighbor(id, bottom, bottom == BOTTOMSITE);
+    unionOpenNeighbor(id, bottom, bottom == virtualBottomSite);
     unionOpenNeighbor(id, left, false);
     unionOpenNeighbor(id, right, false);
   }
@@ -65,10 +66,10 @@ public class Percolation {
 
   public boolean isFull(int i, int j) {
     int id = xyTo1D(i, j);
-    return isOpenSite[id] && ufNoBottom.connected(TOPSITE, id);
+    return isOpenSite[id] && ufFull.connected(virtualTopSite, id);
   }
 
   public boolean percolates() {
-    return uf.connected(TOPSITE, BOTTOMSITE);
+    return ufPerc.connected(virtualTopSite, virtualBottomSite);
   }
 }

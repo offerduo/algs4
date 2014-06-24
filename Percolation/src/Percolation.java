@@ -22,8 +22,9 @@ public class Percolation {
   private void unionOpenNeighbor(int id, int neighbor, boolean isVirtualBottom) {
     if (neighbor != Integer.MAX_VALUE && isOpenSite[neighbor]) {
       ufPerc.union(neighbor, id);
-      if (!isVirtualBottom)
+      if (!isVirtualBottom) {
         ufFull.union(neighbor, id);
+      }
     }
   }
 
@@ -43,10 +44,8 @@ public class Percolation {
   // Otherwise, do union on all neighboring open sites
   public void open(int i, int j) {
     int id = xyTo1D(i, j);
-    if (isOpenSite[id])
-      return;
-    else
-      isOpenSite[id] = true;
+    if (isOpenSite[id]) return;
+    else isOpenSite[id] = true;
 
     // merge all open neighboring
     int top = (id <= n) ? virtualTopSite : id - n;

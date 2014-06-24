@@ -1,10 +1,9 @@
 public class Percolation {
-  private int[] sites;        // with virtual bottom site
-  private int[] sitesNoBottom; // without virtual bottom site
-  private int   n;
-  private int   TOPSITE;      // virtual top site
-  private int   BOTTOMSITE;   // virtual bottom site
-  private int   BLOCK;        // large enough to indicate this site is blocked
+  private WeightedQuickUnionUF uf, ufNoBottom;
+  private int                  n;
+  private int                  TOPSITE;       // virtual top site: 0
+  private int                  BOTTOMSITE;    // virtual bottom site: n*n+1
+  private boolean[]            isOpenSite;
 
   // mapping function for 2D (i,j) pair to 1D index
   private int xyTo1D(int i, int j) {
@@ -20,107 +19,56 @@ public class Percolation {
       throw new IndexOutOfBoundsException("column index i out of bounds");
   }
 
-  // Returns component id for the given site
-  private int find(int id, boolean hasBottom) {
-    int[] site = hasBottom ? sites : sitesNoBottom;
-    while (site[id] != id) {
-      if (site[id] == BLOCK)
-        return BLOCK;
-      id = site[id];
+  private void unionOpenNeighbor(int id, int neighbor, boolean isBottom) {
+    if (neighbor != Integer.MAX_VALUE && isOpenSite[neighbor]) {
+      uf.union(neighbor, id);
+      if (!isBottom)
+        ufNoBottom.union(neighbor, id);
     }
-    return id;
-  }
-
-  private int find(int id) {
-    return find(id, true);
-  }
-
-  // Return component id for neighboring open sites
-  private int[] getNeighborRoot(int id, boolean hasBottom) {
-    int top = (id <= n) ? find(TOPSITE, hasBottom)
-                       : find(id - n, hasBottom);
-    int bottom = 0;
-    if (id > n * n - n) {
-      bottom = hasBottom ? find(BOTTOMSITE, hasBottom) : BLOCK;
-    } else {
-      bottom = find(id + n, hasBottom);
-    }
-    int left = (id % n == 1) ? BLOCK : find(id - 1, hasBottom);
-    int right = (id % n == 0) ? BLOCK : find(id + 1, hasBottom);
-
-    return new int[] { top, bottom, left, right };
-  }
-
-  // Return minimal component id among all open neighbor sites
-  private int getMinRoot(int[] neighbors) {
-    int ret = BLOCK;
-    for (int neighbor : neighbors) {
-      if (neighbor == BLOCK)
-        continue;
-      if (neighbor < ret)
-        ret = neighbor;
-    }
-    return ret;
-  }
-  
-  private void updateSite(int id, boolean hasBottom) {
-    int[] site = hasBottom ? sites : sitesNoBottom;
-    int[] neighbors = getNeighborRoot(id, hasBottom);
-    int minRoot = getMinRoot(neighbors);
-    minRoot = (minRoot < id) ? minRoot : id;
-    site[id] = minRoot;
-    for (int neighbor : neighbors) {
-      if (neighbor != BLOCK)
-        site[neighbor] = minRoot;
-    }
-  }
-  
-  private void updateSite(int id) {
-    updateSite(id, true);
   }
 
   // Create N-by-N grid with all sites blocked
   public Percolation(int N) {
-    sites = new int[N * N + 2]; // two virtual sites
-    sitesNoBottom = new int[N * N + 1]; // only virtual top site
+    uf = new WeightedQuickUnionUF(N * N + 2);
+    ufNoBottom = new WeightedQuickUnionUF(N * N + 1);
+    isOpenSite = new boolean[N * N + 2]; // default to closed/false
+    isOpenSite[0] = isOpenSite[N * N + 1] = true;
     n = N;
     TOPSITE = 0;
     BOTTOMSITE = n * n + 1;
-    BLOCK = n * n + 2;
-
-    // Initialize all sites to be blocked
-    sites[TOPSITE] = sitesNoBottom[TOPSITE] = TOPSITE;
-    sites[BOTTOMSITE] = BOTTOMSITE;
-    for (int i = 1; i <= n * n; ++i) {
-      sites[i] = sitesNoBottom[i] = BLOCK;
-    }
   }
 
   // If site is open, do nothing
   // Otherwise, do union on all neighboring open sites
   public void open(int i, int j) {
-    if (isOpen(i, j))
-      return;
-
     int id = xyTo1D(i, j);
-    sites[id] = id; // mark current site as open
+    if (isOpenSite[id])
+      return;
+    else
+      isOpenSite[id] = true;
 
     // merge all open neighboring
-    updateSite(id);
-    updateSite(id, false);
+    int top = (id <= n) ? TOPSITE : id - n;
+    int bottom = (id > n * n - n) ? BOTTOMSITE : id + n;
+    int left = (id % n == 1) ? Integer.MAX_VALUE : id - 1;
+    int right = (id % n == 0) ? Integer.MAX_VALUE : id + 1;
+
+    unionOpenNeighbor(id, top, false);
+    unionOpenNeighbor(id, bottom, bottom == BOTTOMSITE);
+    unionOpenNeighbor(id, left, false);
+    unionOpenNeighbor(id, right, false);
   }
 
   public boolean isOpen(int i, int j) {
-    int id = xyTo1D(i, j);
-    return sites[id] != BLOCK;
+    return isOpenSite[xyTo1D(i, j)];
   }
 
   public boolean isFull(int i, int j) {
     int id = xyTo1D(i, j);
-    return isOpen(i, j) && find(id, false) == TOPSITE;
+    return isOpenSite[id] && ufNoBottom.connected(TOPSITE, id);
   }
 
   public boolean percolates() {
-    return find(BOTTOMSITE) == TOPSITE;
+    return uf.connected(TOPSITE, BOTTOMSITE);
   }
 }

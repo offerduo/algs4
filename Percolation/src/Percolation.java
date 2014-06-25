@@ -5,6 +5,19 @@ public class Percolation {
   private int                  virtualBottomSite; // virtual bottom site: n*n+1
   private boolean[]            isOpenSite;       // status array of sites
 
+  // Create N-by-N grid with all sites blocked
+  public Percolation(int N) {
+    if (N <= 0) throw new IllegalArgumentException();
+    ufPerc = new WeightedQuickUnionUF(N * N + 2);
+    ufFull = new WeightedQuickUnionUF(N * N + 1);
+    n = N;
+    virtualTopSite = 0;
+    virtualBottomSite = n * n + 1;
+    isOpenSite = new boolean[N * N + 2]; // default to closed/false
+    // open up virtual top and bottom sites
+    isOpenSite[virtualTopSite] = isOpenSite[virtualBottomSite] = true;
+  }
+
   // mapping function for 2D (i,j) pair to 1D index
   private int xyTo1D(int i, int j) {
     validateXY(i, j);
@@ -26,18 +39,6 @@ public class Percolation {
         ufFull.union(neighbor, id);
       }
     }
-  }
-
-  // Create N-by-N grid with all sites blocked
-  public Percolation(int N) {
-    ufPerc = new WeightedQuickUnionUF(N * N + 2);
-    ufFull = new WeightedQuickUnionUF(N * N + 1);
-    n = N;
-    virtualTopSite = 0;
-    virtualBottomSite = n * n + 1;
-    isOpenSite = new boolean[N * N + 2]; // default to closed/false
-    // open up virtual top and bottom sites
-    isOpenSite[virtualTopSite] = isOpenSite[virtualBottomSite] = true;
   }
 
   // If site is open, do nothing

@@ -1,20 +1,20 @@
 public class PercolationStats {
   private Percolation perc;
-  private int[]       threshold;
+  private double[]    threshold;
   private final int   N;
   private final int   T;
 
   public PercolationStats(int N, int T) {
     if (N <= 0 || T <= 0) throw new IllegalArgumentException();
 
-    threshold = new int[T];
+    threshold = new double[T];
     this.N = N;
     this.T = T;
 
     for (int i = 0; i < T; ++i) {
       perc = new Percolation(N);
       do {
-        ++threshold[i];
+        threshold[i] += 1.0;
         int row = 0, col = 0;
         do {
           row = StdRandom.uniform(1, N + 1); // [1, N+1)
@@ -22,26 +22,16 @@ public class PercolationStats {
         } while (perc.isOpen(row, col));
         perc.open(row, col);
       } while (!perc.percolates());
+      threshold[i] /= (N * N);
     }
   }
 
   public double mean() {
-    double sum = 0.0;
-    for (int i = 0; i < T; ++i) {
-      sum += threshold[i];
-    }
-    return sum / (N * N * T);
+    return StdStats.mean(threshold);
   }
 
   public double stddev() {
-    if (T == 1) return Double.NaN;
-    double meanVal = mean();
-    double sqrtDiffs = 0.0;
-    for (int i = 0; i < T; ++i) {
-      double diffs = meanVal - (double) threshold[i] / (N * N);
-      sqrtDiffs += diffs * diffs;
-    }
-    return Math.sqrt(sqrtDiffs / (T - 1));
+    return StdStats.stddev(threshold);
   }
 
   public double confidenceLo() {

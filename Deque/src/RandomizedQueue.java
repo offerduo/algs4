@@ -30,6 +30,7 @@ public class RandomizedQueue<Item> implements Iterable<Item> {
   }
 
   public void enqueue(Item item) {
+    if (item == null) throw new NullPointerException();
     if (N == q.length) resize(2 * q.length);
     q[last++] = item;
     if (last == q.length) last = 0;
@@ -48,7 +49,8 @@ public class RandomizedQueue<Item> implements Iterable<Item> {
   }
 
   public Item sample() {
-    return q[StdRandom.uniform(N)];
+    if (isEmpty()) throw new java.util.NoSuchElementException();
+    return q[(first + StdRandom.uniform(N)) % q.length];
   }
 
   private class RandomIterator implements Iterator<Item> {
@@ -95,14 +97,6 @@ public class RandomizedQueue<Item> implements Iterable<Item> {
 
   public static void main(String[] args) {
     RandomizedQueue<Integer> myQueue = new RandomizedQueue<Integer>();
-    for (int i = 0; i < 10; ++i) {
-      myQueue.enqueue(new Integer(i));
-    }
 
-    System.out.println();
-
-    for (Integer integer : myQueue) {
-      System.out.println(integer);
-    }
   }
 }

@@ -3,7 +3,7 @@ import java.util.Iterator;
 public class Subset {
   public static void main(String[] args) {
     RandomizedQueue<String> myQueue = new RandomizedQueue<String>();
-    int k = StdIn.readInt();
+    int k = Integer.parseInt(args[0]);
     while (!StdIn.isEmpty()) {
       myQueue.enqueue(StdIn.readString());
     }

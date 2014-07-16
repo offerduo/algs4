@@ -93,17 +93,11 @@ public class RandomizedQueue<Item> implements Iterable<Item> {
     return new RandomIterator();
   }
 
-  public void dump() {
-    for (int i = 0; i < N; ++i)
-      System.out.println(q[i]);
-  }
-
   public static void main(String[] args) {
     RandomizedQueue<Integer> myQueue = new RandomizedQueue<Integer>();
     for (int i = 0; i < 10; ++i) {
       myQueue.enqueue(new Integer(i));
     }
-    myQueue.dump();
 
     System.out.println();
 

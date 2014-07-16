@@ -1,40 +1,114 @@
 import java.util.Iterator;
 
-public class Deque<T> implements Iterable<T> {
-  private class DoublyLinkedNode {
-    T                item;
-    DoublyLinkedNode prev;
-    DoublyLinkedNode next;
+public class Deque<Item> implements Iterable<Item> {
+  private class Node {
+    private Item item;
+    private Node next, prev;
   }
 
-  private DoublyLinkedNode first, last;
+  private int N;
+  private Node pre, post; // sentinels before/after first/last nodes
 
-  private class ListIterator implements Iterator<T> {
+  public Deque() {
+    pre = new Node();
+    post = new Node();
+    pre.next = post;
+    post.prev = pre;
+    N = 0;
+  }
 
-    @Override
+  public boolean isEmpty() {
+    return N == 0;
+  }
+
+  public int size() {
+    return N;
+  }
+
+  public void addFirst(Item item) {
+    if (item == null) throw new java.util.NoSuchElementException();
+    Node newNode = new Node();
+    newNode.item = item;
+    newNode.prev = pre;
+    newNode.next = pre.next;
+    newNode.prev.next = newNode;
+    newNode.next.prev = newNode;
+    ++N;
+  }
+
+  public void addLast(Item item) {
+    if (item == null) throw new java.util.NoSuchElementException();
+    Node newNode = new Node();
+    newNode.item = item;
+    newNode.next = post;
+    newNode.prev = post.prev;
+    newNode.next.prev = newNode;
+    newNode.prev.next = newNode;
+    ++N;
+  }
+
+  public Item removeFirst() {
+    if (isEmpty()) throw new UnsupportedOperationException();
+    Node ret = pre.next;
+    ret.prev.next = ret.next;
+    ret.next.prev = ret.prev;
+    ret.prev = ret.next = null;
+    --N;
+
+    return ret.item;
+  }
+
+  public Item removeLast() {
+    if (isEmpty()) throw new UnsupportedOperationException();
+    Node ret = post.prev;
+    ret.next.prev = ret.prev;
+    ret.prev.next = ret.next;
+    ret.next = ret.prev = null;
+    --N;
+
+    return ret.item;
+  }
+
+  private class FrontIterator implements Iterator<Item> {
+    private Node current;
+
+    public FrontIterator() {
+      current = pre.next;
+    }
+
     public boolean hasNext() {
-      // TODO Auto-generated method stub
-      return false;
+      return current != post;
     }
 
-    @Override
-    public T next() {
-      // TODO Auto-generated method stub
-      return null;
+    public Item next() {
+      if (!hasNext()) throw new java.util.NoSuchElementException();
+      current = current.next;
+      return current.prev.item;
     }
 
-    @Override
     public void remove() {
-      // TODO Auto-generated method stub
-
+      throw new UnsupportedOperationException();
     }
-
   }
 
-  @Override
-  public Iterator<T> iterator() {
-    // TODO Auto-generated method stub
-    return new ListIterator();
+  public Iterator<Item> iterator() {
+    return new FrontIterator();
   }
 
+  public static void main(String[] args) {
+    Deque<Integer> myDeque = new Deque<Integer>();
+    myDeque.addLast(new Integer(1));
+    myDeque.removeFirst();
+    myDeque.addLast(new Integer(3));
+    myDeque.removeLast();
+    myDeque.addLast(new Integer(4));
+
+    for (Integer integer : myDeque) {
+      System.out.println(integer);
+    }
+    System.out.println();
+
+    System.out.print(myDeque.removeLast());
+
+  }
 }
